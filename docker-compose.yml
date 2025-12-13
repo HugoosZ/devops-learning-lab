@@ -1,0 +1,25 @@
+services:
+  frontend: 
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"        
+    environment:
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+    networks:
+      - page_network
+
+  backend:
+    build:
+      context: ./my-auth-api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    networks:
+      - page_network
+
+networks:
+  page_network:
+    driver: bridge

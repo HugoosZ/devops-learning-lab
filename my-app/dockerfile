@@ -1,0 +1,29 @@
+# 1) Build stage
+FROM node:lts-alpine AS builder
+WORKDIR /app
+
+# Install deps (leverage Docker cache)
+COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+RUN npm ci --ignore-scripts
+
+# Copy source and build
+COPY . .
+# Standalone output reduces runtime size
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# 2) Runtime stage
+FROM node:lts-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy only what’s needed for standalone
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+EXPOSE 3000
+CMD ["node", "server.js"]
