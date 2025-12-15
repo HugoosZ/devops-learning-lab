@@ -1,0 +1,4 @@
+apiVersion: v1 # La version va a cambiar depende del tipo de Recurso (En este caso Namespace)
+kind: Namespace
+metadata:
+  name: devops-lab
