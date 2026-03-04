@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: dressy/devops-frontend:93c2669d4c44a7817409fe5a119b4cb6ca61e9f7
+          image: dressy/devops-frontend:0e20b759cb291903275e7cca9fdd6ffd7c90c771
           
           #resources: # <--- ESTO ES LO QUE PERMITE EL ESCALADO DINÁMICO
             #requests:
