@@ -19,19 +19,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push # Construye y empuja la imagen a Docker Hub
+      - name: Build and push backend # Construye y empuja la imagen a Docker Hub
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           # .hash del commit como tag para que cada versión sea única
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:${{ github.sha }}
-          
+
       - name: Update Kubernetes resources
         run: |
-          # Instalamos kustomize o usamos sed para un cambio rápido
           cd k8s/backend
-          sed -i "s|image: dressy/devops-backend:.*|image: dressy/devops-backend:${{ github.sha }}|g" deployment.yaml
+          # Este sed es más agresivo: busca cualquier cosa que diga devops-backend y le pone el tag
+          sed -i "s|image: .*devops-backend.*|image: dressy/devops-backend:${{ github.sha }}|g" deployment.yaml
           
       - name: Commit and push changes
         run: |

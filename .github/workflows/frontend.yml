@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -28,16 +28,16 @@ jobs:
 
       - name: Update Kubernetes resources
         run: |
-          # Instalamos kustomize o usamos sed para un cambio rápido
           cd k8s/frontend
-          sed -i "s|image: dressy/devops-frontend:.*|image: dressy/devops-backend:${{ github.sha }}|g" deployment.yaml
-          
+          # Este sed es más agresivo: busca cualquier cosa que diga devops-frontend y le pone el tag
+          sed -i "s|image: .*devops-frontend.*|image: dressy/devops-frontend:${{ github.sha }}|g" deployment.yaml
+
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add k8s/backend/deployment.yaml
-          git commit -m "chore: update backend image to ${{ github.sha }}"
+          git add k8s/frontend/deployment.yaml
+          git commit -m "chore: update frontend image to ${{ github.sha }}"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
