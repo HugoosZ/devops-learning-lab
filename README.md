@@ -122,44 +122,124 @@ Con esto, primero se mira que se necesita una replica gracias al spec de deploym
 Es el puente automatizado entre el código en GitHub y la infraestructura en Minikube. Su rol es quitar la responsabilidad de "aplicar" los cambios y dar la seguridad de que lo que se ve en el repositorio es exactamente lo que está corriendo.
 
 #### Conceptos basicos
-- **GitOps:** Es la metodología donde Git es la única fuente de verdad. Si quieres cambiar algo en el clúster, no usas la terminal; cambias el archivo en Git y ArgoCD se encarga del resto.
 
-- **Application (Recurso de Argo):** Es un objeto dentro de ArgoCD que conecta un repositorio de Git con un Namespace de Kubernetes. Le dice: "Mira esta carpeta en GitHub y asegúrate de que el clúster se vea exactamente igual".
-
+- **GitOps:** Es la metodología donde Git es la única fuente de verdad. Si quieres cambiar algo en el cluster, no usas la terminal; cambias el archivo en Git y ArgoCD se encarga del resto.
+- **Application (Recurso de Argo):** Es un objeto dentro de ArgoCD que conecta un repositorio de Git con un Namespace de Kubernetes. Le dice: "Mira esta carpeta en GitHub y asegurate de que el cluster se vea exactamente igual".
 - **Sync (Sincronización):** Es el proceso de comparar el estado deseado (Git) con el estado real (Kubernetes).
+- **Out of Sync:** Hiciste un cambio en Git que aún no llega al cluster (o alguien metio mano manualmente con kubectl).
+- **Self-Healing (Auto-curación):** Si alguien borra un Pod o un Service manualmente con la terminal, ArgoCD lo detecta y lo vuelve a crear automaticamente para que coincida con Git.
 
-- **Out of Sync:** Hiciste un cambio en Git que aún no llega al clúster (o alguien metió mano manualmente con kubectl).
-
-
-- **Self-Healing (Auto-curación):** Si alguien borra un Pod o un Service manualmente con la terminal, ArgoCD lo detecta y lo vuelve a crear automáticamente para que coincida con Git.
 ---
 
-### 1.  Preparacion del terreno: 
-- Primero es necesario crear el namespace para argo: ```kubectl create namespace argocd```, para luego instalar ArgoCD mediante: 
-``` 
+#### 1. Preparacion del entorno
+
+- Crear el namespace para ArgoCD:
+
+```bash
+kubectl create namespace argocd
+```
+
+- Instalar ArgoCD:
+
+```bash
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
-- Para visualizar el estado de la descarga, se puede hacer mediante ``` kubectl get pods -n argocd -w ```.  Dado que argoCD cuenta con una interfaz grafica, se debe hacer un port-forward para visualizarlo ya que el entorno local no permite visualizar el puerto del cluster. El port-forward se puede hacer gracias a: ```kubectl port-forward svc/argocd-server -n argocd 8080:443```. Tambien se podria hacer un ingress para redirigir el trafico, pero no lo veo necesario. Para ingresar al usuario de argoCD, es necesario usar "admin" de usuario y la contraseña se obtiene mediante: ```kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo```. 
-- Luego de iniciar sesion, es necesario conectar el repo con argoCD. Para ello, hay que ir a "settings"→"+connect repo" y en mi caso, la conexion la hice mediante HTTP/HTTPS.
-- Ahora es necesario crear un nuevo proyecto. Para ello, hay que ir a la seccion de "Applications" y luego a "+NEW APP". Donde los parametros configurados fueron los siguientes:
-    - GENERAL
-        - Application name: devops-lab-app
-        - Project Name: default
-        - Sync Policy: automatic
-            - Enable auto-sync ✓
-            - Prune Resources ✓ (si se borra algo en Git, se borra en el clúster)
-            - Self Heal ✓ (si se borra algo manual en el clúster, Argo lo restaura)
-    - SOURCE
-        - Repository URL: https://github.com/HugoosZ/devops-learning-lab
-        - Revision: HEAD
-        - Path: k8s
-    - DESTINATION
-        - Cluster URL: defecto
-        - Namespace: devops-lab
-    - DIRECTORY
-        - DIRECTORY RECURSE ✓ (Esto indica que k8s contiene mas directorios)
+
+- Visualizar el estado de la descarga con `kubectl get pods -n argocd -w`.
+- Dado que ArgoCD cuenta con una interfaz grafica, se debe hacer un port-forward para visualizarlo ya que el entorno local no permite visualizar el puerto del cluster:
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+Tambien se podria hacer un ingress para redirigir el trafico, pero no es necesario.
+
+- Para ingresar, usar el usuario `admin` y obtener la contraseña mediante:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+``` 
+#### 2. Conexion del repositorio
+
+1. Luego de iniciar sesion, conectar el repo con ArgoCD:
+   - Ir a "settings" → "+connect repo"
+   - En mi caso, hice la conexion mediante HTTP/HTTPS
+
+2. Crear una nueva aplicacion:
+   - Ir a "Applications" → "+NEW APP"
+   - Configurar los siguientes parametros:
+
+**GENERAL:**
+- Application name: `devops-lab-app`
+- Project Name: `default`
+- Sync Policy: `automatic`
+  - Enable auto-sync ✓
+  - Prune Resources ✓ (si se borra algo en Git, se borra en el cluster)
+  - Self Heal ✓ (si se borra algo manual en el cluster, Argo lo restaura)
+
+**SOURCE:**
+- Repository URL: `https://github.com/HugoosZ/devops-learning-lab`
+- Revision: `HEAD`
+- Path: `k8s`
+
+**DESTINATION:**
+- Cluster URL: (defecto)
+- Namespace: `devops-lab`
+
+**DIRECTORY:**
+- DIRECTORY RECURSE ✓ (indica que k8s contiene mas directorios)
     
 
+---
+
+### GitHub Actions
+
+En este paso, se busca automatizar el flujo de trabajo con ArgoCD para que traiga las versiones desde DockerHub en lugar de traerlas desde el entorno local.
+
+#### 1. Configuracion de deployments
+
+Es necesario modificar los deployments del [backend](k8s/backend/deployment.yaml) y [frontend](k8s/frontend/deployment.yaml) para que ArgoCD intente buscar la imagen en DockerHub inicialmente. Es necesario poner el nombre de usuario antes del repositorio para cumplir con las reglas de DockerHub. Con esto, aseguramos que ArgoCD siempre tenga la ultima version de la app.
+
+#### 2. Crear workflows
+
+Crear dos archivos:
+- [backend](.github/workflows/backend.yml)
+- [frontend](.github/workflows/frontend.yml)
+
+Estos workflows se ejecutaran al realizar commits a git. El objetivo es que cuando se detecte un cambio en la rama `main`, solo si hay cambios en las carpetas `backend`, `frontend` o `k8s`, se realicen las actualizaciones correspondientes a los repositorios de DockerHub y GitHub.
+
+El pipeline funciona de la siguiente manera:
+1. Clonar el repositorio de GitHub
+2. Iniciar sesion en DockerHub
+3. Subir los cambios de cada componente de manera independiente
+4. Cambiar el deployment de cada componente con el mismo tag del commit
+5. Subir los cambios a Docker y a Git
+
+#### 3. Obtener credenciales
+
+**Docker Hub:**
+- Usuario de DockerHub
+- Token: crear en "Foto de perfil" → "Settings" → "Personal access tokens"
+  - Dar acceso a: Read, write, delete
+  - Sin fecha de expiracion
+
+**GitHub:**
+- Primero, permitir cambios de escritura en el repositorio cuando se ejecuten workflows:
+  - Ir a "Repo" → "Settings" → "Actions" → "General" → "Workflow permissions" → "Read and write permissions" ✓
+- Crear token en: "Foto de perfil" → "Settings" → "Developer settings" → "Personal access tokens" → "Tokens (classic)" → "Generate new token (classic)"
+  - Seleccionar: "Repo" ✓
+
+#### 4. Configurar variables de entorno
+
+En el repositorio, ir a "Repo" → "Settings" → "Secrets and variables" → "Actions" → "New repository secret" y crear las siguientes variables:
+
+- `DOCKERHUB_TOKEN`: Token de DockerHub (para que GitHub escriba en DockerHub)
+- `DOCKERHUB_USERNAME`: Usuario de DockerHub
+- `GH_PAT`: Personal Access Token de GitHub (para que escriba en el repo)
+
+#### 5. Resultado
+
+Con esto, al subir algun cambio a git, se ejecuta la automatizacion y la imagen se actualiza con cada nuevo commit subido a git. 
 
 
 
