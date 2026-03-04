@@ -41,6 +41,7 @@ jobs:
           git add k8s/backend/deployment.yaml
           # El "|| true" evita que el workflow falle si no hay cambios
           git commit -m "chore: update backend image to ${{ github.sha }}" || echo "No hay cambios nuevos"
-          git push || echo "Nada que empujar"
+          git pull --rebase origin main
+          git push origin main || echo "Nada que empujar"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
