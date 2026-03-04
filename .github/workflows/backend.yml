@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "main" ] # Se activa cuando subes a main
     paths:
-      - 'backend/**'    # Solo si cambias cosas en la carpeta backend
+      - 'backend/**' # Solo si cambias cosas en la carpeta backend
+      - 'k8s/backend/**' # Se agregó por si se realizan cambios en los archivos de Kubernetes relacionados al backend
 
 jobs:
   build:

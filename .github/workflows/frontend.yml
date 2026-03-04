@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'frontend/**'    # Solo se activa si se cambia algo en la carpeta frontend
+      - 'frontend/**'
+      - 'k8s/frontend/**' # Se agregó por si se realizan cambios en los archivos de Kubernetes relacionados al frontend
 
 jobs:
   build:
