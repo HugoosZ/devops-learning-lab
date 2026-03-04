@@ -1,0 +1,27 @@
+apiVersion: apps/v1 # La version va a cambiar depende del tipo de Recurso (En este caso Deployment)
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: frontend:latest
+          #resources: # <--- ESTO ES LO QUE PERMITE EL ESCALADO DINÁMICO
+            #requests:
+              #cpu: "100m"
+              #memory: "128Mi"
+            #limits:
+              #cpu: "200m"
+              #memory: "256Mi"
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000

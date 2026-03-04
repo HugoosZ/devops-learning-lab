@@ -20,8 +20,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
     setLoading(true)
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:3001"
-      const res = await fetch(`${baseUrl}/api/auth/login`, {
+      /// const baseUrl = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://devops-lab.test"
+      /// const res = await fetch(`${baseUrl}/api/auth/login`, {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

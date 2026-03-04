@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    # Esta anotación es vital para que Minikube sepa que Nginx debe manejar este tráfico
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: devops-lab.test  # El dominio que inventes
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service # servicio de front
+            port:
+              number: 3000 # port del service de front
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service # servicio de back
+            port:
+              number: 3001 # port del service de back

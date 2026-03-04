@@ -1,0 +1,20 @@
+apiVersion: apps/v1 # La version va a cambiar depende del tipo de Recurso (En este caso Deployment)
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: backend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3001

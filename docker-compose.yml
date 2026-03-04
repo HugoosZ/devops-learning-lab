@@ -1,22 +1,22 @@
 services:
   frontend: 
     build:
-      context: ./my-app
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"        
+      - "3005:3005"        
     environment:
       - HOSTNAME=0.0.0.0
-      - PORT=3000
+      - PORT=3005
     networks:
       - page_network
 
   backend:
     build:
-      context: ./my-auth-api
+      context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "3006:3006"
     networks:
       - page_network
 
