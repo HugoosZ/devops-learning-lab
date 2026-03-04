@@ -16,9 +16,9 @@
 
 ---
 
-#### Pasos
+### Pasos
 
-Debido al espacio disponible en el macbook, trabaje en windows.
+Se trabajará en MacOS
 
 ### 1. Lanzar Kubernetes
 
@@ -26,7 +26,6 @@ Debido al espacio disponible en el macbook, trabaje en windows.
 minikube start --driver=docker
 ```
 
-Especificamente se utilizara la VM de docker debido a que es muy estable en windows.
 
 El sistema solicito usar el siguiente comando para activar todos los dashboards features:
 
@@ -120,7 +119,7 @@ Con esto, primero se mira que se necesita una replica gracias al spec de deploym
 
 ### ArgoCD
 
-
+Es el puente automatizado entre el código en GitHub y la infraestructura en Minikube. Su rol es quitar la responsabilidad de "aplicar" los cambios y dar la seguridad de que lo que se ve en el repositorio es exactamente lo que está corriendo.
 
 #### Conceptos basicos
 - **GitOps:** Es la metodología donde Git es la única fuente de verdad. Si quieres cambiar algo en el clúster, no usas la terminal; cambias el archivo en Git y ArgoCD se encarga del resto.
@@ -134,5 +133,33 @@ Con esto, primero se mira que se necesita una replica gracias al spec de deploym
 
 - **Self-Healing (Auto-curación):** Si alguien borra un Pod o un Service manualmente con la terminal, ArgoCD lo detecta y lo vuelve a crear automáticamente para que coincida con Git.
 ---
-1. kubectl create namespace argocd
+
+### 1.  Preparacion del terreno: 
+- Primero es necesario crear el namespace para argo: ```kubectl create namespace argocd```, para luego instalar ArgoCD mediante: 
+``` 
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+- Para visualizar el estado de la descarga, se puede hacer mediante ``` kubectl get pods -n argocd -w ```.  Dado que argoCD cuenta con una interfaz grafica, se debe hacer un port-forward para visualizarlo ya que el entorno local no permite visualizar el puerto del cluster. El port-forward se puede hacer gracias a: ```kubectl port-forward svc/argocd-server -n argocd 8080:443```. Tambien se podria hacer un ingress para redirigir el trafico, pero no lo veo necesario. Para ingresar al usuario de argoCD, es necesario usar "admin" de usuario y la contraseña se obtiene mediante: ```kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo```. 
+- Luego de iniciar sesion, es necesario conectar el repo con argoCD. Para ello, hay que ir a "settings"→"+connect repo" y en mi caso, la conexion la hice mediante HTTP/HTTPS.
+- Ahora es necesario crear un nuevo proyecto. Para ello, hay que ir a la seccion de "Applications" y luego a "+NEW APP". Donde los parametros configurados fueron los siguientes:
+    - GENERAL
+        - Application name: devops-lab-app
+        - Project Name: default
+        - Sync Policy: automatic
+            - Enable auto-sync ✓
+            - Prune Resources ✓ (si se borra algo en Git, se borra en el clúster)
+            - Self Heal ✓ (si se borra algo manual en el clúster, Argo lo restaura)
+    - SOURCE
+        - Repository URL: https://github.com/HugoosZ/devops-learning-lab
+        - Revision: HEAD
+        - Path: k8s
+    - DESTINATION
+        - Cluster URL: defecto
+        - Namespace: devops-lab
+    - DIRECTORY
+        - DIRECTORY RECURSE ✓ (Esto indica que k8s contiene mas directorios)
+    
+
+
+
 
