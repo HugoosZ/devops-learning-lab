@@ -15,6 +15,7 @@ spec:
       containers:
         - name: frontend
           image: dressy/devops-frontend:a0833fedb34866bcea65f2bb3edb242c420eac10
+          
           #resources: # <--- ESTO ES LO QUE PERMITE EL ESCALADO DINÁMICO
             #requests:
               #cpu: "100m"
