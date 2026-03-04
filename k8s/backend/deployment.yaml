@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dressy/devops-backend:latest
+          image: dressy/devops-backend:ff2d6378965cbbb17dd4e36b9c230701121d37cc
           imagePullPolicy: Always
           ports:
             - containerPort: 3001
