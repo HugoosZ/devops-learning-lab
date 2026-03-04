@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dressy/devops-backend:ff2d6378965cbbb17dd4e36b9c230701121d37cc
+          image: dressy/devops-backend:a0833fedb34866bcea65f2bb3edb242c420eac10
           imagePullPolicy: Always
           #image: frontend:latest
           #imagePullPolicy: Never
