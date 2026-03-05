@@ -4,7 +4,8 @@ metadata:
   name: ingress
   annotations:
     # Esta anotación es importante para que Minikube sepa que Nginx debe manejar este tráfico
-    kubernetes.io/ingress.class: nginx
+    #kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: gce
 spec:
   rules:
   #- host: devops-lab.test  # dom random que apunta a localhost gracias al /etc/hosts
