@@ -12,6 +12,7 @@ spec:
   - http:
     paths:
     - path: /
+      #pathType: Prefix
       pathType: ImplementationSpecific
       backend:
         service:
@@ -19,6 +20,7 @@ spec:
           port:
             number: 3000 # port del service de front
     - path: /api
+      #pathType: Prefix
       pathType: ImplementationSpecific
       backend:
         service:
