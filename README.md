@@ -240,6 +240,10 @@ En el repositorio, ir a "Repo" → "Settings" → "Secrets and variables" → "A
 #### 5. Resultado
 
 Con esto, al subir algun cambio a git, se ejecuta la automatizacion y la imagen se actualiza con cada nuevo commit subido a git. 
-
-
-
+---
+### Google Cloud Platform
+### 1. Creacion de cluster.
+- Para crear el cluster, se debe ir a "Kubernetes engine" → "Clusteres" → "Crear". En este caso, lo hice con autopilot, donde solo configuré el nombre del cluster y la region (southamerica-west1) en la seccion "aspectos basicos del cluster", lo demas se dejó por defecto.
+- Para almacenar las replicas, se tiene que crear un repositorio en "Artifact Registry", donde en este caso, solo se asignó que sea de tipo docker y se le llamó devops-repo
+- Mientras se espera la creacion del cluster que se demora aprox 10m, se procedio a realizar una atenticacion mediante la consola del pc mediante: ```gcloud auth login ```, donde es necesario iniciar sesion de google mediante el link.
+- Luego, es necesario obtener el id del proyecto. Este se puede obtener clickeando el proyecto, que en este caso es el por defecto de nombre "My First Proyect", donde en la pestaña emergente se puede obtener el id. Mediante esto, se debe usar: ```gcloud config set project project-3467abaf-14aa-4dd9-ac1```

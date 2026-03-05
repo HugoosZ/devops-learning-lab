@@ -8,19 +8,19 @@ metadata:
 spec:
   rules:
   #- host: devops-lab.test  # dom random que apunta a localhost gracias al /etc/hosts
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service # servicio de front
-            port:
-              number: 3000 # port del service de front
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: backend-service # servicio de back
-            port:
-              number: 3001 # port del service de back
+  - http:
+    paths:
+    - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: frontend-service # servicio de front
+          port:
+            number: 3000 # port del service de front
+    - path: /api
+      pathType: Prefix
+      backend:
+        service:
+          name: backend-service # servicio de back
+          port:
+            number: 3001 # port del service de back
