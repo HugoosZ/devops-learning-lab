@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          #image: dressy/devops-backend:54d0ff2fcd73df8a091108fbce0b0b0952cc50df
+          #image: dressy/devops-backend:65c2d124ffb0fd3e4a9ef122f2aa6819208ec303
           image: southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/backend:v1
           imagePullPolicy: Always
           #image: frontend:latest
