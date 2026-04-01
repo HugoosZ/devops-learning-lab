@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          #image: dressy/devops-frontend:95fdfc974efe934450a947ecc9be1154822a9d86
+          #image: dressy/devops-frontend:7dea02a939f87c3cdd18f161c686d4134396f5e3
           image: southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/frontend:v1
           #resources: # <--- ESTO ES LO QUE PERMITE EL ESCALADO DINÁMICO
             #requests:
