@@ -4,7 +4,7 @@ import cors from 'cors';
 import { setAuthRoutes } from './routes/auth.routes';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
 const HOST = '0.0.0.0';
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: false }));
