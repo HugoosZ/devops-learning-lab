@@ -50,3 +50,18 @@
       shell: "docker-compose up -d"
       args:
         chdir: /home/hugo/lab-devops
+    - name: Instalar Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Copiar configuración de Nginx
+      copy:
+        src: ./nginx.conf
+        dest: /etc/nginx/sites-available/default
+        force: yes
+
+    - name: Reiniciar Nginx para aplicar cambios
+      service:
+        name: nginx
+        state: restarted
