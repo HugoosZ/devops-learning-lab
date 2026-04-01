@@ -242,29 +242,126 @@ En el repositorio, ir a "Repo" → "Settings" → "Secrets and variables" → "A
 Con esto, al subir algun cambio a git, se ejecuta la automatizacion y la imagen se actualiza con cada nuevo commit subido a git. 
 ---
 ### Google Cloud Platform
-### 1. Creacion de cluster.
-- Para crear el cluster, se debe ir a "Kubernetes engine" → "Clusteres" → "Crear". En este caso, lo hice con autopilot, donde solo configuré el nombre del cluster y la region (southamerica-west1) en la seccion "aspectos basicos del cluster", lo demas se dejó por defecto.
-- Para almacenar las replicas, se tiene que crear un repositorio en "Artifact Registry", donde en este caso, solo se asignó que sea de tipo docker y se le llamó "devops-repo"
-- Mientras se espera la creacion del cluster que se demora aprox 10m, se procedio a realizar una atenticacion mediante la consola del pc mediante: ```gcloud auth login ```, donde es necesario iniciar sesion de google mediante el link.
-- Luego, es necesario obtener el id del proyecto. Este se puede obtener clickeando el proyecto, que en este caso es el por defecto de nombre "My First Proyect", donde en la pestaña emergente se puede obtener el id. Mediante esto, se debe usar: ```gcloud config set project [ID_PROYECTO]```
-- Ahora, se debe instalar el pluggin de kubernetes de google. Esto mediante: ```gcloud components install gke-gcloud-auth-plugin```
-- Ahora es necesario modificar el archivo que indica donde se solicitan las credenciales de docker, gracias a ```gcloud auth configure-docker southamerica-west1-docker.pkg.dev``` ahora cada vez que se ejecute un comando de docker, este sabrá que debe usar las credenciales de GCP para autenticarse.
-- Para migrar el entorno local a la nube de Google Cloud (GCP), es necesario subir las versiones más recientes de las imágenes al Artifact Registry. Primero, identificamos la imagen deseada mediante ```docker images``` y le asignamos una etiqueta de destino con el comando: ```docker tag [ID_IMAGEN] southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/[NOMBRE IMAGEN]:v1```. Finalmente, se transfieren los datos al repositorio regional de Santiago ejecutando ```docker push``` con la ruta completa de la etiqueta creada de forma que quede: ```docker push southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/[NOMBRE IMAGEN]:v1```
-- Mediante ```gcloud auth configure-docker southamerica-west1-docker.pkg.devgcloud auth configure-docker southamerica-west1-docker.pkg.dev``` se le da permiso a Kubectl para que mandar ordenes al cluster. Sin esto la terminal seguiría pensando que el clúster es el localhost o Minikube.
-- Con esto, ya se puede crear el namespace de argoCD, esto mediante ```kubectl create namespace argocd```. Para luego instalarlo mediante: ```kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml```. En este caso, no se pudo instalar debido a un limite del servidor de la API de kubernetes. Para ello, la IA recomendó instalarlo mediante: ``` kubectl apply --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml```. 
-- Para acceder a ArgoCD es necesario solicitarle al servidor una IP, esto se puede hacer mediante: ```kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'```. Esta configuracion puede demorar unos minutos. Está IP se puede obtener mediante ```kubectl get svc -n argocd argocd-server```
-- Cuando el pod de argoCD se encuentre operativo, se puede obtener la contraseña de este mismo mediante: ``` kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo```.
-- Luego de ingresar el proyecto de github al igual que antes, este se sincroniza y se puede observar al igual que en local. Dado que ahora nos encontramos en el servidor, es necesario modificar la imagen del deployment de [backend](k8s/backend/deployment.yaml) y [frontend](k8s/frontend/deployment.yaml) a la ruta que se ingresó cuando se cargó la imagen al repositorio. 
-- Adicionalmente, es necesario quitar el host de [ingress](k8s/ingress.yaml) dado que ahora no nos encontramos en un entorno local, cambiar el ingress.class de nginx a gce y los pathType de Prefix a ImplementationSpecific. Esto debido a que estos son los estandar en gcp. Si no, se tendria que instalar nginx al igual que en el entorno local.
-- Si se desea ver el estado del proyecto, se puede hacer mediante: ```kubectl get events -n devops-lab --sort-by='.lastTimestamp'```
-- En mi caso, se presentó un problema porque el cluster consume mas recursos de los que me da el freetier. Hay que limitarlo.... Dado que pararé por hoy, para no consumir creditos, se puede hacer: ```kubectl delete ingress ingress -n devops-lab ``` y ``` gcloud container clusters delete cluster-devops --region southamerica-west1 ```. 
+#### 1. Creacion de cluster
+
+- Para crear el cluster, ir a "Kubernetes Engine" → "Clusters" → "Crear". En mi caso lo hice con Autopilot: solo configure el nombre del cluster y la region (`southamerica-west1`) en la seccion de aspectos basicos; lo demas quedo por defecto.
+- Para almacenar las imagenes, se tiene que crear un repositorio en "Artifact Registry". En este caso, lo deje de tipo Docker y lo llame `devops-repo`.
+
+#### 2. Configuracion inicial en terminal
+
+- Mientras se crea el cluster (aprox. 10 minutos), se puede autenticar GCP desde consola:
+
+```bash
+gcloud auth login
+```
+
+- Luego, obtener el ID del proyecto (en mi caso, desde el proyecto por defecto) y configurarlo:
+
+```bash
+gcloud config set project [ID_PROYECTO]
+```
+
+- Instalar el plugin de autenticacion para GKE:
+
+```bash
+gcloud components install gke-gcloud-auth-plugin
+```
+
+- Configurar Docker para usar credenciales de Artifact Registry:
+
+```bash
+gcloud auth configure-docker southamerica-west1-docker.pkg.dev
+```
+
+#### 3. Subida de imagenes a Artifact Registry
+
+- Para migrar desde local a GCP, primero identificar la imagen:
+
+```bash
+docker images
+```
+
+- Etiquetar la imagen con destino en Artifact Registry:
+
+```bash
+docker tag [ID_IMAGEN] southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/[NOMBRE_IMAGEN]:v1
+```
+
+- Subir la imagen:
+
+```bash
+docker push southamerica-west1-docker.pkg.dev/project-3467abaf-14aa-4dd9-ac1/devops-repo/[NOMBRE_IMAGEN]:v1
+```
+
+#### 4. Instalacion de ArgoCD en GKE
+
+- Crear namespace de ArgoCD:
+
+```bash
+kubectl create namespace argocd
+```
+
+- Instalar ArgoCD:
+
+```bash
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+- En mi caso fallo por limite del API server, por lo que funciono mejor con:
+
+```bash
+kubectl apply --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+- Exponer ArgoCD con LoadBalancer:
+
+```bash
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+```
+
+- Ver la IP asignada:
+
+```bash
+kubectl get svc -n argocd argocd-server
+```
+
+- Obtener la contraseña inicial de `admin`:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+#### 5. Ajustes para desplegar en GCP
+
+- Luego de conectar el repo en ArgoCD, se sincroniza igual que en local.
+- Como ahora se despliega en servidor, hay que modificar las imagenes del deployment de [backend](k8s/backend/deployment.yaml) y [frontend](k8s/frontend/deployment.yaml) a la ruta de Artifact Registry.
+- Tambien hay que ajustar [ingress](k8s/ingress.yaml): quitar `host` (local), cambiar `ingress.class` de `nginx` a `gce` y usar `pathType: ImplementationSpecific`.
+
+- Para revisar eventos del proyecto:
+
+```bash
+kubectl get events -n devops-lab --sort-by='.lastTimestamp'
+```
+
+#### 6. Cierre de recursos (para no gastar creditos)
+
+- En mi caso, el cluster consumia mas recursos que el free tier, asi que para detener costos:
+
+```bash
+kubectl delete ingress ingress -n devops-lab
+gcloud container clusters delete cluster-devops --region southamerica-west1
+```
 
 #### No termine esto!
 
 ---
 
 ### Ansible: 
+#### Docker
 Para trabajar con ansible, decidí crear una VM en GCP. 
 
 1. Configuracion entorno local:
-Primero, cree inventory.ini, el cual es el encargado de hacer un "ping" a gcp para verificar si la conexion se encuentra estable. Para ejecutar el inventory se usó el comando ``` ansible laboratorio -m ping -i inventory.ini ```. Luego de responder mediante un pong success, se creo el setup.yml, el cual indicaria las ordenes basicas para que todo funciona. Este se puede ejecutar mediante ``` ansible-playbook -i inventory.ini setup.yml ```. Ahora se utiliza ansible-playbook porque ansible -m ping es solo una herramienta de diagnostico. Ping solo se ejecuta una cosa a la vez, a diferencia de playbook, que ejecuta en orden la lista de setup.yml. Inicialmente me salieron unos ok y changed al ejecutar el ansible playbook, que es lo esperable ya que los oks se ejecutan por primera vez mientra que los changed cambian configuraciones. Si se ejecuta una segunda vez, todo deberia salir en ok.
+Primero, cree inventory.ini, el cual es el encargado de hacer un "ping" a gcp para verificar si la conexion se encuentra estable. Para ejecutar el inventory se usó el comando ``` ansible laboratorio -m ping -i inventory.ini ```. Luego de responder mediante un pong success, se creo el setup.yml, el cual indicaria las ordenes basicas para que todo funciona. Este se puede ejecutar mediante ``` ansible-playbook -i inventory.ini setup.yml ```. Ahora se utiliza ansible-playbook porque ansible -m ping es solo una herramienta de diagnostico. Ping solo se ejecuta una cosa a la vez, a diferencia de playbook, que ejecuta en orden la lista de setup.yml. Inicialmente me salieron unos ok y changed al ejecutar el ansible playbook, que es lo esperable ya que los oks se ejecutan por primera vez mientra que los changed cambian configuraciones. Si se ejecuta una segunda vez, todo deberia salir en ok. Salieron bastantes problemas al intentar ejecutar los dockerfiles mediante docker compose. Para ello, se le hicieron cambios al archivo dockerfile para guardarlo como Dockerfile con d mayuscula. Funcionó, pero no se veia el puerto 3005 ni el 3006, por lo que se tuvo que modificar la regla del firewall para que aceptara trafico desde el puerto 3005 y 3006. Con ello, se podia acceder a la ip/3005. Pero para solucionar esto, se tuvo que instalar NGINX para que se mapeara el puerto 80 (TCP) para que por defecto mostrara lo del puerto 3005. Luego, se configuró el front y backend que está corriendo en los puertos 3000 y 3001, corran en el 3005 y 3006 respectivamente.  Finalmente, se tuvo que configurar bien el nginx.conf para que mediante docker funcionará bien la conexion. Para ahora usar kubernetes, no haria falta usar el nginx ya que este va de manera implicita en los yml.
+
+#### Kubernetes:
+
