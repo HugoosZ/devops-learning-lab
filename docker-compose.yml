@@ -16,7 +16,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "3006:3006"
+      - "3006:3001"
     networks:
       - page_network
 
