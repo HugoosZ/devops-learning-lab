@@ -1,0 +1,52 @@
+---
+- name: Preparar servidor Debian
+  hosts: laboratorio
+  become: yes  # Esto es para ejecutar como sudo (root)
+  tasks:
+    - name: Actualizar caché de paquetes (apt update)
+      apt:
+        update_cache: yes
+
+    - name: Instalar dependencias básicas
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Instalar Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Asegurar que Docker esté corriendo
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Agregar al usuario 'hugo' al grupo docker
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+    - name: Instalar Git y Docker Compose
+      apt:
+        name:
+          - git
+          - docker-compose
+        state: present
+
+    - name: Clonar el repositorio del proyecto
+      git:
+        repo: 'https://github.com/HugoosZ/devops-learning-lab'
+        dest: /home/hugo/lab-devops
+        force: yes
+
+    - name: Levantar la aplicación con Docker Compose
+      shell: "docker-compose up -d"
+      args:
+        chdir: /home/hugo/lab-devops

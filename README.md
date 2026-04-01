@@ -257,4 +257,14 @@ Con esto, al subir algun cambio a git, se ejecuta la automatizacion y la imagen 
 - Luego de ingresar el proyecto de github al igual que antes, este se sincroniza y se puede observar al igual que en local. Dado que ahora nos encontramos en el servidor, es necesario modificar la imagen del deployment de [backend](k8s/backend/deployment.yaml) y [frontend](k8s/frontend/deployment.yaml) a la ruta que se ingresó cuando se cargó la imagen al repositorio. 
 - Adicionalmente, es necesario quitar el host de [ingress](k8s/ingress.yaml) dado que ahora no nos encontramos en un entorno local, cambiar el ingress.class de nginx a gce y los pathType de Prefix a ImplementationSpecific. Esto debido a que estos son los estandar en gcp. Si no, se tendria que instalar nginx al igual que en el entorno local.
 - Si se desea ver el estado del proyecto, se puede hacer mediante: ```kubectl get events -n devops-lab --sort-by='.lastTimestamp'```
-- En mi caso, se presentó un problema porque el cluster consume mas recursos de los que me da el freetier. Hay que limitarlo.... Dado que pararé por hoy, para no consumir creditos, se puede hacer: ```kubectl delete ingress ingress -n devops-lab ``` y ``` gcloud container clusters delete cluster-devops --region southamerica-west1 ```
+- En mi caso, se presentó un problema porque el cluster consume mas recursos de los que me da el freetier. Hay que limitarlo.... Dado que pararé por hoy, para no consumir creditos, se puede hacer: ```kubectl delete ingress ingress -n devops-lab ``` y ``` gcloud container clusters delete cluster-devops --region southamerica-west1 ```. 
+
+#### No termine esto!
+
+---
+
+### Ansible: 
+Para trabajar con ansible, decidí crear una VM en GCP. 
+
+1. Configuracion entorno local:
+Primero, cree inventory.ini, el cual es el encargado de hacer un "ping" a gcp para verificar si la conexion se encuentra estable. Para ejecutar el inventory se usó el comando ``` ansible laboratorio -m ping -i inventory.ini ```. Luego de responder mediante un pong success, se creo el setup.yml, el cual indicaria las ordenes basicas para que todo funciona. Este se puede ejecutar mediante ``` ansible-playbook -i inventory.ini setup.yml ```. Ahora se utiliza ansible-playbook porque ansible -m ping es solo una herramienta de diagnostico. Ping solo se ejecuta una cosa a la vez, a diferencia de playbook, que ejecuta en orden la lista de setup.yml. Inicialmente me salieron unos ok y changed al ejecutar el ansible playbook, que es lo esperable ya que los oks se ejecutan por primera vez mientra que los changed cambian configuraciones. Si se ejecuta una segunda vez, todo deberia salir en ok.
