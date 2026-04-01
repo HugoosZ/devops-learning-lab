@@ -7,7 +7,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = '0.0.0.0';
 
-app.use(cors({ origin: 'http://localhost:3000', credentials: false }));
+app.use(cors({ origin: '*', credentials: false }));
 app.use(bodyParser.json());
 
 setAuthRoutes(app);
